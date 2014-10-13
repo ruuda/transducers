@@ -33,15 +33,15 @@ trait Transduce<T> {
 
 }
 
-//fn mapping<R, T, U>(f: |T| -> U) -> |(|R, U| -> R)| -> (|R, T| -> R) {
-//    |step| |r, x| step(r, f(x))
-//}
-
 type Step<'s, R, T> = proc(R, T): 's -> R;
+type Transducer<'t, R, T, U> = proc(Step<'t, R, U>): 't -> Step<'t, R, T>;
 
-fn filtering<'p, R, T>(pred: |T|: 'p -> bool) -> |Step<'p, R, T>|: 'p -> Step<'p, R, T>
-{
-    |step: Step<'p, R, T>| proc (r, x) step(r, x)
+fn mapping<'f, R, T, U>(f: |T|: 'f -> U) -> Transducer<'f, R, T, U> {
+    proc(step) proc(r, x) step(r, f(x))
+}
+
+fn filtering<'p, R, T>(pred: |&T|: 'p -> bool) -> Transducer<'p, R, T, T> {
+    proc(step) proc(r, x) if pred(&x) { step(r, x) } else { r }
 }
 
 #[test]
