@@ -29,12 +29,28 @@
 // hairy to do it correctly, I think. For now, it is just R -> R. It is wrong.
 // I know.
 
-trait Transduce<T> {
-
-}
-
 type Step<'s, R, T> = proc(R, T): 's -> R;
 type Transducer<'t, R, T, U> = proc(Step<'t, R, U>): 't -> Step<'t, R, T>;
+
+trait Transduce<R, T, U> {
+    fn transduce<'s>(self, trans: Transducer<'s, R, T, U>) -> R;
+}
+
+// TODO: this is not yet fully generic over R.
+impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
+    fn transduce<'s>(self, trans: Transducer<'s, Vec<U>, T, U>) -> Vec<U> {
+        let mut iter = self.move_iter();
+        let step = trans(proc(rr, x) { rr.push(x); rr });
+        let mut r = Vec::new();
+        loop {
+            match iter.next() {
+                Some(x) => r = step(r, x),
+                None => break
+            }
+        }
+        r
+    }
+}
 
 fn mapping<'f, R, T, U>(f: |T|: 'f -> U) -> Transducer<'f, R, T, U> {
     proc(step) proc(r, x) step(r, f(x))
