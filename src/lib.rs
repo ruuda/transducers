@@ -29,8 +29,8 @@
 // hairy to do it correctly, I think. For now, it is just R -> R. It is wrong.
 // I know.
 
-type Step<'s, R, T> = proc(R, T): 's -> R;
-type Transducer<'t, R, T, U> = proc(Step<'t, R, U>): 't -> Step<'t, R, T>;
+type Step<'s, R, T> = |R, T|: 's -> R;
+type Transducer<'t, R, T, U> = |Step<'t, R, U>|: 't -> Step<'t, R, T>;
 
 trait Transduce<R, T, U> {
     fn transduce<'s>(self, trans: Transducer<'s, R, T, U>) -> R;
@@ -40,7 +40,7 @@ trait Transduce<R, T, U> {
 impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
     fn transduce<'s>(self, trans: Transducer<'s, Vec<U>, T, U>) -> Vec<U> {
         let mut iter = self.into_iter();
-        let step = trans(proc(rr, x) { rr.push(x); rr });
+        let step = trans(|rr, x| { rr.push(x); rr });
         let mut r = Vec::new();
         loop {
             match iter.next() {
@@ -52,12 +52,12 @@ impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
     }
 }
 
-fn mapping<'f, R, T, U>(f: |T|: 'f -> U) -> Transducer<'f, R, T, U> {
-    proc(step) proc(r, x) step(r, f(x))
+fn mapping<'f, R, T, U>(f: |T|: 'f -> U) -> &'f Transducer<'f, R, T, U> {
+    |step| |r, x| step(r, f(x))
 }
 
 fn filtering<'p, R, T>(pred: |&T|: 'p -> bool) -> Transducer<'p, R, T, T> {
-    proc(step) proc(r, x) if pred(&x) { step(r, x) } else { r }
+    |step| |r, x| if pred(&x) { step(r, x) } else { r }
 }
 
 #[test]
