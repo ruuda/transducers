@@ -39,7 +39,7 @@ trait Transduce<R, T, U> {
 // TODO: this is not yet fully generic over R.
 impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
     fn transduce<'s>(self, trans: Transducer<'s, Vec<U>, T, U>) -> Vec<U> {
-        let mut iter = self.move_iter();
+        let mut iter = self.into_iter();
         let step = trans(proc(rr, x) { rr.push(x); rr });
         let mut r = Vec::new();
         loop {
