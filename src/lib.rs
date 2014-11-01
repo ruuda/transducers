@@ -29,22 +29,40 @@
 // hairy to do it correctly, I think. For now, it is just R -> R. It is wrong.
 // I know.
 
-type Step<'s, R, T> = |R, T|: 's -> R;
-type Transducer<'t, R, T, U> = |Step<'t, R, U>|: 't -> Step<'t, R, T>;
+#![feature(overloaded_calls)]
+#![feature(closure_sugar)]
 
 trait Transduce<R, T, U> {
-    fn transduce<'s>(self, trans: Transducer<'s, R, T, U>) -> R;
+    fn transduce<'t, Trans, LStep, RStep>(self, trans: Trans) -> R
+        where Trans: Sized + Fn<(LStep,), RStep> + 't,
+              LStep: Sized + Fn<(R, U), R> + 't,
+              RStep: Sized + Fn<(R, T), R> + 't;
+}
+
+struct Step<'s, R, T> {
+    step_fn: |R, T|: 's -> R
+}
+
+impl<'s, R, T> Fn<(R, T), R> for Step<'s, R, T> {
+    pub fn call(&self, args: (R, T)) -> R {
+        let (r, t) = args;
+        (self.step_fn)(r, t)
+    }
 }
 
 // TODO: this is not yet fully generic over R.
 impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
-    fn transduce<'s>(self, trans: Transducer<'s, Vec<U>, T, U>) -> Vec<U> {
+    fn transduce<'t, Trans, LStep, RStep>(self, trans: Trans) -> Vec<U>
+        where Trans: Sized + Fn<(LStep,), RStep> + 't,
+              LStep: Sized + Fn<(Vec<U>, U), Vec<U>> + 't,
+              RStep: Sized + Fn<(Vec<U>, T), Vec<U>> + 't {
         let mut iter = self.into_iter();
-        let step = trans(|rr, x| { rr.push(x); rr });
+        let step = Step { step_fn: |rr: Vec<U>, x| { rr.push(x); rr } };
+        let transduced_step = trans(step);
         let mut r = Vec::new();
         loop {
             match iter.next() {
-                Some(x) => r = step(r, x),
+                Some(x) => r = transduced_step(r, x),
                 None => break
             }
         }
@@ -52,12 +70,21 @@ impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
     }
 }
 
-fn mapping<'f, R, T, U>(f: |T|: 'f -> U) -> &'f Transducer<'f, R, T, U> {
-    |step| |r, x| step(r, f(x))
+struct Mapping<'f, T, U> {
+    f: |T|: 'f -> U
 }
 
-fn filtering<'p, R, T>(pred: |&T|: 'p -> bool) -> Transducer<'p, R, T, T> {
-    |step| |r, x| if pred(&x) { step(r, x) } else { r }
+impl<'t, R, T, U, LStep, RStep> Fn<(LStep,), RStep> for Mapping<'t, T, U>
+    where LStep: Sized + Fn<(R, U), R> + 't,
+          RStep: Sized + Fn<(R, T), R> + 't {
+    pub fn call(&self, args: (LStep,)) -> RStep {
+        let (step,) = args;
+        |r, x| step(r, (self.f)(x))
+    }
+}
+
+fn mapping<'f, T, U>(f: |T|: 'f -> U) -> Mapping<'f, T, U>{
+    Mapping { f: f }
 }
 
 #[test]
