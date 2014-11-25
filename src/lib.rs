@@ -29,62 +29,17 @@
 // hairy to do it correctly, I think. For now, it is just R -> R. It is wrong.
 // I know.
 
-#![feature(overloaded_calls)]
-#![feature(closure_sugar)]
+#![feature(unboxed_closures)]
 
-trait Transduce<R, T, U> {
-    fn transduce<'t, Trans, LStep, RStep>(self, trans: Trans) -> R
-        where Trans: Sized + Fn<(LStep,), RStep> + 't,
-              LStep: Sized + Fn<(R, U), R> + 't,
-              RStep: Sized + Fn<(R, T), R> + 't;
+type Step<'s, R, T> = Fn<(R, T), R> + 's;
+type Transducer<'t, R, T, U> = Fn<(Step<'t, R, U>), Step<'t, R, T>> + 't;
+
+fn do_mapping<'f, R, T, U>(f: &'f mut Fn<(T,), U>, step: Step<'f, R, U>) -> Step<'f, R, T> {
+    |r, x| step(r, f(x))
 }
 
-struct Step<'s, R, T> {
-    step_fn: |R, T|: 's -> R
-}
-
-impl<'s, R, T> Fn<(R, T), R> for Step<'s, R, T> {
-    pub fn call(&self, args: (R, T)) -> R {
-        let (r, t) = args;
-        (self.step_fn)(r, t)
-    }
-}
-
-// TODO: this is not yet fully generic over R.
-impl<T, U> Transduce<Vec<U>, T, U> for Vec<T> {
-    fn transduce<'t, Trans, LStep, RStep>(self, trans: Trans) -> Vec<U>
-        where Trans: Sized + Fn<(LStep,), RStep> + 't,
-              LStep: Sized + Fn<(Vec<U>, U), Vec<U>> + 't,
-              RStep: Sized + Fn<(Vec<U>, T), Vec<U>> + 't {
-        let mut iter = self.into_iter();
-        let step = Step { step_fn: |rr: Vec<U>, x| { rr.push(x); rr } };
-        let transduced_step = trans(step);
-        let mut r = Vec::new();
-        loop {
-            match iter.next() {
-                Some(x) => r = transduced_step(r, x),
-                None => break
-            }
-        }
-        r
-    }
-}
-
-struct Mapping<'f, T, U> {
-    f: |T|: 'f -> U
-}
-
-impl<'t, R, T, U, LStep, RStep> Fn<(LStep,), RStep> for Mapping<'t, T, U>
-    where LStep: Sized + Fn<(R, U), R> + 't,
-          RStep: Sized + Fn<(R, T), R> + 't {
-    pub fn call(&self, args: (LStep,)) -> RStep {
-        let (step,) = args;
-        |r, x| step(r, (self.f)(x))
-    }
-}
-
-fn mapping<'f, T, U>(f: |T|: 'f -> U) -> Mapping<'f, T, U>{
-    Mapping { f: f }
+fn mapping<'f, R, T, U>(f: &'f mut Fn<(T,), U>) -> Transducer<'f, R, T, U> {
+    |&: step| do_mapping(f, step)
 }
 
 #[test]
