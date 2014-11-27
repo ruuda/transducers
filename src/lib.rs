@@ -31,15 +31,15 @@
 
 #![feature(unboxed_closures)]
 
-type Step<'s, R, T> = Fn<(R, T), R> + 's;
-type Transducer<'t, R, T, U> = Fn<(Step<'t, R, U>), Step<'t, R, T>> + 't;
-
-fn do_mapping<'f, R, T, U>(f: &'f mut Fn<(T,), U>, step: Step<'f, R, U>) -> Step<'f, R, T> {
+fn do_mapping<'f, R, T, U, F, Step>(f: F, step: Step) -> Fn(R, T) -> R
+    where F: Fn(T) -> U,
+          Step: Fn(R, U) -> R {
     |r, x| step(r, f(x))
 }
 
-fn mapping<'f, R, T, U>(f: &'f mut Fn<(T,), U>) -> Transducer<'f, R, T, U> {
-    |&: step| do_mapping(f, step)
+fn mapping<R, T, U, F>(f: F) -> (Fn(Fn(R, U) -> R) -> (Fn(R, T) -> R))
+    where F: Fn(T) -> U {
+    |step| do_mapping(f, step)
 }
 
 #[test]
