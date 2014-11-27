@@ -30,6 +30,15 @@
 // I know.
 
 #![feature(unboxed_closures)]
+#![feature(associated_types)]
+
+trait Transducer<R, T, U, FromStep>
+    where FromStep: Fn(R, U) -> R {
+    type ToStep: Fn(R, T) -> R;
+    // TODO: the full name of ToStep should not be necessary, right?
+    // But the compiler complains without it ...
+    fn call(&self, step: FromStep) -> <Self as Transducer<R, T, U, FromStep>>::ToStep;
+}
 
 struct MappingStep<Step, F> {
     step: Step,
@@ -55,6 +64,15 @@ impl<R, T, U, Step, F> Fn(Step) -> MappingStep<Step, F> for Mapping<F>
     extern "rust-call" fn call(&self, args: (Step,)) -> MappingStep<Step, F> {
         let (step,) = args;
         MappingStep { step: step, f: self.f.clone() }
+    }
+}
+
+impl<R, T, U, FromStep, F> Transducer<R, T, U, FromStep> for Mapping<F>
+    where FromStep: Fn(R, U) -> R,
+          F: Clone + Fn(T) -> U {
+    type ToStep = MappingStep<FromStep, F>;
+    fn call(&self, step: FromStep) -> MappingStep<FromStep, F> {
+        MappingStep { step: step, f: self.f.clone() } // TODO: struct field order consistency.
     }
 }
 
