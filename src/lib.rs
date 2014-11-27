@@ -58,11 +58,12 @@ impl<R, T, U, Step, F> Fn(Step) -> MappingStep<Step, F> for Mapping<F>
     }
 }
 
-fn mapping<R, T, U, F>(f: F) -> Mapping<F>
+fn mapping<T, U, F>(f: F) -> Mapping<F>
     where F: Fn(T) -> U {
     Mapping { f: f }
 }
 
 #[test]
 fn it_works() {
+    let m = mapping(|x: i32| x * 2);
 }
