@@ -36,7 +36,7 @@ struct MappingStep<Step, F> {
     f: F
 }
 
-impl<R, T, U, Step, F> Fn<(R, T), R> for MappingStep<Step, F>
+impl<R, T, U, Step, F> Fn(R, T) -> R for MappingStep<Step, F>
     where Step: Fn(R, U) -> R,
           F: Fn(T) -> U {
     fn call(&self, args: (R, T)) -> R {
@@ -49,7 +49,7 @@ struct Mapping<F> {
     f: F
 }
 
-impl<R, T, U, Step, F> Fn<(Step,), MappingStep<Step, F>> for Mapping<F>
+impl<R, T, U, Step, F> Fn(Step) -> MappingStep<Step, F> for Mapping<F>
     where Step: Fn(R, U) -> R,
           F: Fn(T) -> U {
     fn call(&self, args: (Step,)) -> MappingStep<Step, F> {
