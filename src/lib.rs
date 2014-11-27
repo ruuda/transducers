@@ -51,10 +51,10 @@ struct Mapping<F> {
 
 impl<R, T, U, Step, F> Fn(Step) -> MappingStep<Step, F> for Mapping<F>
     where Step: Fn(R, U) -> R,
-          F: Fn(T) -> U {
+          F: Clone + Fn(T) -> U {
     extern "rust-call" fn call(&self, args: (Step,)) -> MappingStep<Step, F> {
         let (step,) = args;
-        MappingStep { step: step, f: self.f }
+        MappingStep { step: step, f: self.f.clone() }
     }
 }
 
