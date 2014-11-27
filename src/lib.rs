@@ -31,15 +31,25 @@
 
 #![feature(unboxed_closures)]
 
-fn do_mapping<'f, R, T, U, F, Step>(f: F, step: Step) -> Fn(R, T) -> R
-    where F: Fn(T) -> U,
-          Step: Fn(R, U) -> R {
-    |r, x| step(r, f(x))
+struct MappingStep<R, T, U, F>
+    where F: Fn(T) -> U {
+    f: F
 }
 
-fn mapping<R, T, U, F>(f: F) -> (Fn(Fn(R, U) -> R) -> (Fn(R, T) -> R))
+struct Mapping<R, T, U, F>
     where F: Fn(T) -> U {
-    |step| do_mapping(f, step)
+    f: F
+}
+
+fn do_mapping<'f, R, T, U, F, Step>(f: F, step: Step) -> MappingStep<R, T, U, F>
+    where F: Fn(T) -> U,
+          Step: Fn(R, U) -> R {
+    MappingStep { f: f }
+}
+
+fn mapping<R, T, U, F>(f: F) -> Mapping<R, T, U, F>
+    where F: Fn(T) -> U {
+    Mapping { f: f }
 }
 
 #[test]
