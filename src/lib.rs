@@ -31,23 +31,34 @@
 
 #![feature(unboxed_closures)]
 
-struct MappingStep<R, T, U, F>
-    where F: Fn(T) -> U {
+struct MappingStep<Step, F> {
+    step: Step,
     f: F
 }
 
-struct Mapping<R, T, U, F>
-    where F: Fn(T) -> U {
+impl<R, T, U, Step, F> Fn<(R, T), R> for MappingStep<Step, F>
+    where Step: Fn(R, U) -> R,
+          F: Fn(T) -> U {
+    fn call(&self, args: (R, T)) -> R {
+        let (r, t) = args;
+        self.step(r, self.f(t))
+    }
+}
+
+struct Mapping<F> {
     f: F
 }
 
-fn do_mapping<'f, R, T, U, F, Step>(f: F, step: Step) -> MappingStep<R, T, U, F>
-    where F: Fn(T) -> U,
-          Step: Fn(R, U) -> R {
-    MappingStep { f: f }
+impl<R, T, U, Step, F> Fn<(Step,), MappingStep<Step, F>> for Mapping<F>
+    where Step: Fn(R, U) -> R,
+          F: Fn(T) -> U {
+    fn call(&self, args: (Step,)) -> MappingStep<Step, F> {
+        let (step,) = args;
+        MappingStep { step: step, f: self.f }
+    }
 }
 
-fn mapping<R, T, U, F>(f: F) -> Mapping<R, T, U, F>
+fn mapping<R, T, U, F>(f: F) -> Mapping<F>
     where F: Fn(T) -> U {
     Mapping { f: f }
 }
