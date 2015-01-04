@@ -1,5 +1,5 @@
 // Transducers -- Transducer library for Rust
-// Copyright (C) 2014 Ruud van Asseldonk
+// Copyright (C) 2014-2015 Ruud van Asseldonk
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 
 #![feature(unboxed_closures)]
 #![feature(associated_types)]
+#![feature(old_orphan_check)]
 
 trait Transducer<R, T, U, FromStep>
     where FromStep: Fn(R, U) -> R {
