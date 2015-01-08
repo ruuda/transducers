@@ -31,11 +31,12 @@
 
 #![feature(unboxed_closures)]
 
-trait Transducer<R, T, U, FromStep>
-    where FromStep: Fn(R, U) -> R {
-    type ToStep: Fn(R, T) -> R;
-    // TODO: the full name of ToStep should not be necessary, right?
-    // But the compiler complains without it ...
+trait Init {
+    fn init() -> Self;
+}
+
+trait Transducer<R, T, U, FromStep> where FromStep: Fn(R, U) -> R {
+    type ToStep : Fn(R, T) -> R;
     fn call(&self, step: FromStep) -> Self::ToStep;
 }
 
@@ -66,7 +67,7 @@ impl<R, T, U, Step, F> Fn(Step) -> MappingStep<Step, F> for Mapping<F>
     }
 }
 
-impl<R, T, U, FromStep, F> Transducer<R, T, U, FromStep> for Mapping<F>
+impl<R, T, U, F, FromStep> Transducer<R, T, U, FromStep> for Mapping<F>
     where FromStep: Fn(R, U) -> R,
           F: Clone + Fn(T) -> U {
     type ToStep = MappingStep<FromStep, F>;
@@ -78,6 +79,42 @@ impl<R, T, U, FromStep, F> Transducer<R, T, U, FromStep> for Mapping<F>
 fn mapping<T, U, F>(f: F) -> Mapping<F>
     where F: Fn(T) -> U {
     Mapping { f: f }
+}
+
+trait Transduce<R, T, U> {
+    type FromStep: Fn(Self, T) -> Self;
+    fn transduce<Trans>(self, trans: Trans) -> R
+        where Trans: Transducer<R, T, U, Self::FromStep>,
+              R: Init;
+}
+
+impl<T> Init for Vec<T> {
+    fn init() -> Vec<T> { Vec::new() }
+}
+
+struct Append<T>;
+
+impl<T> Fn(Vec<T>, T) -> Vec<T> for Append<T> {
+    extern "rust-call" fn call(&self, args: (Vec<T>, T)) -> Vec<T> {
+        let (r, t) = args;
+        r.push(t);
+        r
+    }
+}
+
+impl<R, T, U> Transduce<R, T, U> for Vec<T> {
+    type FromStep = Append<T>;
+    fn transduce<Trans>(self, trans: Trans) -> R
+        where Trans: Transducer<R, T, U, Append<U>>,
+              R: Init {
+        let step = trans.call(Append);
+        let r = Init::init();
+        let i = self.into_iter();
+        while let Some(t) = i.next() {
+            r = step(r, t);
+        }
+        r
+    }
 }
 
 #[test]
