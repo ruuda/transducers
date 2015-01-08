@@ -37,7 +37,7 @@ trait Transducer<R, T, U, FromStep>
     type ToStep: Fn(R, T) -> R;
     // TODO: the full name of ToStep should not be necessary, right?
     // But the compiler complains without it ...
-    fn call(&self, step: FromStep) -> <Self as Transducer<R, T, U, FromStep>>::ToStep;
+    fn call(&self, step: FromStep) -> Self::ToStep;
 }
 
 struct MappingStep<Step, F> {
