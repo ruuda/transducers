@@ -30,7 +30,6 @@
 // I know.
 
 #![feature(unboxed_closures)]
-#![feature(associated_types)]
 #![feature(old_orphan_check)]
 
 trait Transducer<R, T, U, FromStep>
