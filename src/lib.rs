@@ -21,6 +21,11 @@
 // return value from the first time, and pass it as the first thing. That’s
 // wrong. So do you know how to make your type system make that wrong?”
 //
+// [Yes Mr Hickey, I do know how to make that wrong. Take R by value in the
+// step function. If you then put its result into the step function again, then
+// it has moved there, and you cannot return it any more. If R is not Copy, of
+// course.]
+//
 // Then he goes on about a state machine being a valid state, but a sum type is
 // wrong, because if X goes in, it is not X | Y | Z that comes out, it is
 // _always_ Y.
@@ -31,10 +36,26 @@
 
 #![feature(unboxed_closures)]
 
-trait Transducer<'t, R, T, U> {
+pub trait Transducer<'t, R, T, U> {
     type Step: Fn(R, U) -> R + 't;
-
     fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> Self::Step;
+}
+
+// To create a Transduce trait, I think higher-ranked types would be required.
+pub fn transduce<'t, T, U, Trans: Transducer<'t, Vec<T>, T, U> + 't>(vec: Vec<U>, trans: Trans) -> Vec<T>
+    where Trans::Step: 't {
+    // The step function for a vector is simply append.
+    fn append<TT>(mut r: Vec<TT>, t: TT) -> Vec<TT> { r.push(t); r }
+
+    // Then we transduce the step function into the desired form.
+    let step = trans.apply(append);
+
+    // The result is obtained by performing a left fold of the step function.
+    let mut state = Vec::with_capacity(vec.len());
+    for x in vec.into_iter() {
+        state = step(state, x);
+    }
+    state
 }
 
 pub struct MappingStep<'t, R, T, F: 't> {
@@ -72,5 +93,9 @@ pub fn mapping<'f, R, S, F: Fn(S) -> R + 'f>(f: &'f F) -> Mapping<'f, F> {
 
 #[test]
 fn it_works() {
-    let m = mapping(|x: i32| x * 2);
+    let f = |&: x: i32| x * 2;
+    let m = mapping(&f);
+    let v = vec!(2i32, 3, 5, 7, 11);
+    let w = transduce(v, m);
+    println!("{:?}", w);
 }
