@@ -42,8 +42,10 @@ pub trait Transducer<'t, R, T, U> {
 }
 
 // To create a Transduce trait, I think higher-ranked types would be required.
-pub fn transduce<'t, T, U, Trans: Transducer<'t, Vec<T>, T, U> + 't>(vec: Vec<U>, trans: Trans) -> Vec<T>
-    where Trans::Step: 't {
+pub fn transduce<'t, T, U, I: Iterator<Item = U>,
+                 Trans: Transducer<'t, Vec<T>, T, U> + 't>
+                 (mut iter: I, trans: Trans)
+                 -> Vec<T> where Trans::Step: 't {
     // The step function for a vector is simply append.
     fn append<TT>(mut r: Vec<TT>, t: TT) -> Vec<TT> { r.push(t); r }
 
@@ -51,12 +53,14 @@ pub fn transduce<'t, T, U, Trans: Transducer<'t, Vec<T>, T, U> + 't>(vec: Vec<U>
     let step = trans.apply(append);
 
     // The result is obtained by performing a left fold of the step function.
-    let mut state = Vec::with_capacity(vec.len());
-    for x in vec.into_iter() {
-        state = step(state, x);
+    let (min_sz, _) = iter.size_hint();
+    let mut state = Vec::with_capacity(min_sz);
+    for t in iter {
+        state = step(state, t);
     }
     state
 }
+
 
 pub struct MappingStep<'t, R, T, F: 't> {
     step: Box<Fn(R, T) -> R + 't>,
@@ -93,9 +97,9 @@ pub fn mapping<'f, R, S, F: Fn(S) -> R + 'f>(f: &'f F) -> Mapping<'f, F> {
 
 #[test]
 fn it_works() {
-    let f = |&: x: i32| x * 2;
+    let f = |&: x: &i32| *x * 2;
     let m = mapping(&f);
     let v = vec!(2i32, 3, 5, 7, 11);
-    let w = transduce(v, m);
+    let w = transduce(v.iter(), m);
     println!("{:?}", w);
 }
