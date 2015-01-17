@@ -31,90 +31,43 @@
 
 #![feature(unboxed_closures)]
 
-trait Init {
-    fn init() -> Self;
+trait Transducer<'t, R, T, U> {
+    type Step: Fn(R, U) -> R + 't;
+
+    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> Self::Step;
 }
 
-trait Transducer<R, T, U, FromStep> where FromStep: Fn(R, U) -> R {
-    type ToStep : Fn(R, T) -> R;
-    fn call(&self, step: FromStep) -> Self::ToStep;
+pub struct MappingStep<'t, R, T, F: 't> {
+    step: Box<Fn(R, T) -> R + 't>,
+    f: &'t F
 }
 
-struct MappingStep<Step, F> {
-    step: Step,
-    f: F
-}
-
-impl<R, T, U, Step, F> Fn(R, T) -> R for MappingStep<Step, F>
-    where Step: Fn(R, U) -> R,
-          F: Fn(T) -> U {
-    extern "rust-call" fn call(&self, args: (R, T)) -> R {
-        let (r, t) = args;
-        (self.step)(r, (self.f)(t))
+impl<'t, R, T, U, F> Fn(R, U) -> R for MappingStep<'t, R, T, F>
+    where F: Fn(U) -> T + 't {
+    extern "rust-call" fn call(&self, args: (R, U)) -> R {
+        let (r, u) = args;
+        (*self.step)(r, (self.f)(u))
     }
 }
 
-struct Mapping<F> {
-    f: F
+pub struct Mapping<'t, F: 't> {
+    f: &'t F
 }
 
-impl<R, T, U, Step, F> Fn(Step) -> MappingStep<Step, F> for Mapping<F>
-    where Step: Fn(R, U) -> R,
-          F: Clone + Fn(T) -> U {
-    extern "rust-call" fn call(&self, args: (Step,)) -> MappingStep<Step, F> {
-        let (step,) = args;
-        MappingStep { step: step, f: self.f.clone() }
+impl<'t, R: 't, T, U, F> Transducer<'t, R, T, U> for Mapping<'t, F>
+where F: Fn(U) -> T + 't {
+    type Step = MappingStep<'t, R, T, F>;
+
+    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> MappingStep<'t, R, T, F> {
+       MappingStep {
+           step: Box::new(step),
+           f: self.f
+       }
     }
 }
 
-impl<R, T, U, F, FromStep> Transducer<R, T, U, FromStep> for Mapping<F>
-    where FromStep: Fn(R, U) -> R,
-          F: Clone + Fn(T) -> U {
-    type ToStep = MappingStep<FromStep, F>;
-    fn call(&self, step: FromStep) -> MappingStep<FromStep, F> {
-        MappingStep { step: step, f: self.f.clone() } // TODO: struct field order consistency.
-    }
-}
-
-fn mapping<T, U, F>(f: F) -> Mapping<F>
-    where F: Fn(T) -> U {
+pub fn mapping<'f, R, S, F: Fn(S) -> R + 'f>(f: &'f F) -> Mapping<'f, F> {
     Mapping { f: f }
-}
-
-trait Transduce<R, T, U> {
-    type FromStep: Fn(Self, T) -> Self;
-    fn transduce<Trans>(self, trans: Trans) -> R
-        where Trans: Transducer<R, T, U, Self::FromStep>,
-              R: Init;
-}
-
-impl<T> Init for Vec<T> {
-    fn init() -> Vec<T> { Vec::new() }
-}
-
-struct Append<T>;
-
-impl<T> Fn(Vec<T>, T) -> Vec<T> for Append<T> {
-    extern "rust-call" fn call(&self, args: (Vec<T>, T)) -> Vec<T> {
-        let (r, t) = args;
-        r.push(t);
-        r
-    }
-}
-
-impl<R, T, U> Transduce<R, T, U> for Vec<T> {
-    type FromStep = Append<T>;
-    fn transduce<Trans>(self, trans: Trans) -> R
-        where Trans: Transducer<R, T, U, Append<U>>,
-              R: Init {
-        let step = trans.call(Append);
-        let r = Init::init();
-        let i = self.into_iter();
-        while let Some(t) = i.next() {
-            r = step(r, t);
-        }
-        r
-    }
 }
 
 #[test]
