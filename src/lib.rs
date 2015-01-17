@@ -36,6 +36,15 @@
 
 #![feature(unboxed_closures)]
 
+pub use transform::mapping;
+
+mod transform;
+
+/// An abstract tranformation/reduction of data.
+///
+/// A transducer represents a transformation like `map`, `filter` or `fold`. It
+/// specifies how to manipulate the data, independent of the way in which that
+/// data might arrive.
 pub trait Transducer<'t, R, T, U> {
     type Step: Fn(R, U) -> R + 't;
     fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> Self::Step;
@@ -61,39 +70,6 @@ pub fn transduce<'t, T, U, I: Iterator<Item = U>,
     state
 }
 
-
-pub struct MappingStep<'t, R, T, F: 't> {
-    step: Box<Fn(R, T) -> R + 't>,
-    f: &'t F
-}
-
-impl<'t, R, T, U, F> Fn(R, U) -> R for MappingStep<'t, R, T, F>
-    where F: Fn(U) -> T + 't {
-    extern "rust-call" fn call(&self, args: (R, U)) -> R {
-        let (r, u) = args;
-        (*self.step)(r, (self.f)(u))
-    }
-}
-
-pub struct Mapping<'t, F: 't> {
-    f: &'t F
-}
-
-impl<'t, R: 't, T, U, F> Transducer<'t, R, T, U> for Mapping<'t, F>
-where F: Fn(U) -> T + 't {
-    type Step = MappingStep<'t, R, T, F>;
-
-    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> MappingStep<'t, R, T, F> {
-       MappingStep {
-           step: Box::new(step),
-           f: self.f
-       }
-    }
-}
-
-pub fn mapping<'f, T, U, F: Fn(U) -> T + 'f>(f: &'f F) -> Mapping<'f, F> {
-    Mapping { f: f }
-}
 
 #[test]
 fn mapping_on_iter() {
