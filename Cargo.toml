@@ -3,3 +3,7 @@
 name = "transducers"
 version = "0.0.1"
 authors = ["Ruud van Asseldonk <dev@veniogames.com>"]
+description = "A transducer library for Rust"
+keywords = ["transducer", "transducers", "transform", "reduce"]
+license = "GPL-3.0+"
+readme = "readme.md"
