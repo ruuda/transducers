@@ -7,3 +7,5 @@ description = "A transducer library for Rust"
 keywords = ["transducer", "transducers", "transform", "reduce"]
 license = "GPL-3.0+"
 readme = "readme.md"
+homepage = "https://github.com/ruud-v-a/transducers"
+repository = "https://github.com/ruud-v-a/transducers"
