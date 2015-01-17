@@ -91,7 +91,7 @@ where F: Fn(U) -> T + 't {
     }
 }
 
-pub fn mapping<'f, R, S, F: Fn(S) -> R + 'f>(f: &'f F) -> Mapping<'f, F> {
+pub fn mapping<'f, T, U, F: Fn(U) -> T + 'f>(f: &'f F) -> Mapping<'f, F> {
     Mapping { f: f }
 }
 
