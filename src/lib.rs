@@ -96,10 +96,14 @@ pub fn mapping<'f, R, S, F: Fn(S) -> R + 'f>(f: &'f F) -> Mapping<'f, F> {
 }
 
 #[test]
-fn it_works() {
+fn mapping_on_iter() {
     let f = |&: x: &i32| *x * 2;
+    let g = |&: x: i32| x * 2;
     let m = mapping(&f);
+    let n = mapping(&g);
     let v = vec!(2i32, 3, 5, 7, 11);
     let w = transduce(v.iter(), m);
-    println!("{:?}", w);
+    let x = transduce(v.into_iter(), n);
+    assert_eq!(w, vec!(4i32, 6, 10, 14, 22));
+    assert_eq!(w, x);
 }
