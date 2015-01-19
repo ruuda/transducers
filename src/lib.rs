@@ -153,3 +153,14 @@ fn filtering_on_iter() {
     assert_eq!(w, vec!(2i32, 6));
     assert_eq!(x, vec!(2i32, 5, 7, 11));
 }
+
+#[test]
+fn compose_mapping_filtering() {
+    let f = |&: x: i32| x * 2;
+    let p = |&: x: &i32| *x % 3 != 0;
+    // Note: this is not possible yet, we need a compose_trans.
+    // let t = compose(filtering(&p), mapping(&f));
+    // let v = vec!(2i32, 3, 4, 5, 6, 7, 11);
+    // let w = transduce(v.into_iter(), t);
+    // assert_eq!(w, vec!(4i32, 8, 10, 14, 22));
+}
