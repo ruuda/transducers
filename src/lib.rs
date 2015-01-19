@@ -37,6 +37,7 @@
 #![feature(unboxed_closures)]
 
 pub use transform::mapping;
+pub use transform::filtering;
 
 mod transform;
 
@@ -82,4 +83,18 @@ fn mapping_on_iter() {
     let x = transduce(v.into_iter(), n);
     assert_eq!(w, vec!(4i32, 6, 10, 14, 22));
     assert_eq!(w, x);
+}
+
+#[test]
+fn filtering_on_iter() {
+    let p = |&: x: &i32| *x % 2 == 0;
+    let q = |&: x: &i32| *x % 3 != 0;
+    let f = filtering(&p);
+    let h = filtering(&q);
+    let v = vec!(2i32, 3, 5, 6, 7, 11);
+    // TODO: How can we not consume the vector for `Copy` types?
+    let w = transduce(v.clone().into_iter(), f);
+    let x = transduce(v.clone().into_iter(), h);
+    assert_eq!(w, vec!(2i32, 6));
+    assert_eq!(x, vec!(2i32, 5, 7, 11));
 }

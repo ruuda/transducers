@@ -49,3 +49,41 @@ where F: Fn(U) -> T + 't {
 pub fn mapping<'f, T, U, F: Fn(U) -> T + 'f>(f: &'f F) -> Mapping<'f, F> {
     Mapping { f: f }
 }
+
+pub struct FilteringStep<'t, R, T, P: 't> {
+    step: Box<Fn(R, T) -> R + 't>,
+    p: &'t P
+}
+
+impl<'t, R, T, P> Fn(R, T) -> R for FilteringStep<'t, R, T, P>
+where P: Fn(&T) -> bool + 't {
+    extern "rust-call" fn call(&self, args: (R, T)) -> R {
+        let (r, t) = args;
+        if (self.p)(&t) {
+            (*self.step)(r, t)
+        } else {
+            r
+        }
+    }
+}
+
+pub struct Filtering<'t, P: 't> {
+    p: &'t P
+}
+
+impl <'t, R: 't, T, P> Transducer<'t, R, T, T> for Filtering<'t, P>
+where P: Fn(&T) -> bool + 't {
+    type Step = FilteringStep<'t, R, T, P>;
+
+    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> FilteringStep<'t, R, T, P> {
+        FilteringStep {
+            step: Box::new(step),
+            p: self.p
+        }
+    }
+}
+
+/// The filtering transducer passes through all elements for which the predicate is true.
+pub fn filtering<'p, T, P: Fn(&T) -> bool + 'p>(p: &'p P) -> Filtering<'p, P> {
+    Filtering { p: p }
+}
