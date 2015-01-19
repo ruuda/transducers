@@ -83,7 +83,7 @@ where P: Fn(&T) -> bool + 't {
     }
 }
 
-/// The filtering transducer passes through all elements for which the predicate is true.
+/// The filtering transducer passes through all elements for which the predicate `p` is true.
 pub fn filtering<'p, T, P: Fn(&T) -> bool + 'p>(p: &'p P) -> Filtering<'p, P> {
     Filtering { p: p }
 }
