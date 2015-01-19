@@ -22,7 +22,7 @@ pub struct MappingStep<'t, R, T, F: 't> {
 }
 
 impl<'t, R, T, U, F> Fn(R, U) -> R for MappingStep<'t, R, T, F>
-    where F: Fn(U) -> T + 't {
+where F: Fn(U) -> T + 't {
     extern "rust-call" fn call(&self, args: (R, U)) -> R {
         let (r, u) = args;
         (*self.step)(r, (self.f)(u))
