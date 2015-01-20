@@ -1,4 +1,3 @@
-
 // Transducers -- A transducer library for Rust
 // Copyright (C) 2014-2015 Ruud van Asseldonk
 //
@@ -14,6 +13,8 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+use super::Transducer;
 
 /// The function composition `F` after `G`.
 pub struct Composed<X, Y, Z, F, G> {
@@ -69,4 +70,21 @@ fn compose_with_id_is_id() {
     let id = |&: x: i32| x;
     let ff = |&: x: i32| x * 2;
     assert_eq!(ff(42), compose(ff, id)(42));
+}
+
+/// The transducer composition `F` after `G`.
+pub struct ComposedTransducer<'t, R, X, Y, Z, F, G> {
+    f: F,
+    g: G
+}
+
+impl<'t, R, X, Y, Z, F, G> Transducer<'t, R, X, Z>
+for ComposedTransducer<'t, R, X, Y, Z, F, G>
+where F: Transducer<'t, R, Y, Z>,
+      G: Transducer<'t, R, X, Y>,
+      <F as Transducer<'t, R, Y, Z>>::Step: 't {
+    type Step = <F as Transducer<'t, R, Y, Z>>::Step;
+    fn apply<Step: Fn(R, X) -> R + 't>(&self, step: Step) -> <F as Transducer<'t, R, Y, Z>>::Step {
+        self.f.apply(self.g.apply(step))
+    }
 }
