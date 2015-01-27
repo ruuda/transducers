@@ -78,6 +78,9 @@ pub struct ComposedTransducer<'t, R, X, Y, Z, F, G> {
     g: G
 }
 
+// NOTE: The lifetime error looks similar to https://github.com/rust-lang/rust/issues/21520
+// It could be a compiler bug. Otherwise the help message is misleading. Posted
+// to the topic at discuss.rust-lang.org.
 impl<'t, R, X, Y, Z, F, G> Transducer<'t, R, X, Z>
 for ComposedTransducer<'t, R, X, Y, Z, F, G>
 where F: Transducer<'t, R, Y, Z>,
