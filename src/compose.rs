@@ -21,9 +21,10 @@ pub struct Composed<X, Y, Z, F, G> {
     g: G
 }
 
-impl<X, Y, Z, F, G> Fn(X) -> Z for Composed<X, Y, Z, F, G>
+impl<X, Y, Z, F, G> Fn<(X,)> for Composed<X, Y, Z, F, G>
 where F: Fn(Y) -> Z,
       G: Fn(X) -> Y {
+    type Output = Z;
     extern "rust-call" fn call(&self, arg: (X,)) -> Z {
         let (x,) = arg;
         let y = (self.g)(x);

@@ -21,8 +21,9 @@ pub struct MappingStep<'t, R, T, F: 't> {
     f: &'t F
 }
 
-impl<'t, R, T, U, F> Fn(R, U) -> R for MappingStep<'t, R, T, F>
+impl<'t, R, T, U, F> Fn<(R, U)> for MappingStep<'t, R, T, F>
 where F: Fn(U) -> T + 't {
+    type Output = R;
     extern "rust-call" fn call(&self, args: (R, U)) -> R {
         let (r, u) = args;
         (*self.step)(r, (self.f)(u))
@@ -55,8 +56,9 @@ pub struct FilteringStep<'t, R, T, P: 't> {
     p: &'t P
 }
 
-impl<'t, R, T, P> Fn(R, T) -> R for FilteringStep<'t, R, T, P>
+impl<'t, R, T, P> Fn<(R, T)> for FilteringStep<'t, R, T, P>
 where P: Fn(&T) -> bool + 't {
+    type Output = R;
     extern "rust-call" fn call(&self, args: (R, T)) -> R {
         let (r, t) = args;
         if (self.p)(&t) {
