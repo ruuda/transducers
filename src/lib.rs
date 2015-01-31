@@ -37,7 +37,7 @@
 #![feature(unboxed_closures, core)]
 
 pub use compose::{compose};
-pub use transform::{id, mapping, filtering};
+pub use transform::{identity, mapping, filtering};
 
 mod compose;
 mod transform;
@@ -74,9 +74,9 @@ pub fn transduce<'t, T, U, I: Iterator<Item = U>,
 }
 
 #[test]
-fn id_is_id_on_iter() {
+fn identity_is_identity_on_iter() {
     let v = vec!(2i32, 3, 5, 7, 11);
-    let w = transduce(v.clone().into_iter(), id());
+    let w = transduce(v.clone().into_iter(), identity());
     assert_eq!(v, w);
 }
 

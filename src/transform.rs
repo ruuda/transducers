@@ -16,11 +16,11 @@
 
 use super::Transducer;
 
-pub struct IdStep<'t, R, T> {
+pub struct IdentityStep<'t, R, T> {
     step: Box<Fn(R, T) -> R + 't>
 }
 
-impl<'t, R, T> Fn<(R, T)> for IdStep<'t, R, T> {
+impl<'t, R, T> Fn<(R, T)> for IdentityStep<'t, R, T> {
     type Output = R;
     extern "rust-call" fn call(&self, args: (R, T)) -> R {
         let (r, t) = args;
@@ -28,19 +28,19 @@ impl<'t, R, T> Fn<(R, T)> for IdStep<'t, R, T> {
     }
 }
 
-pub struct Id;
+pub struct Identity;
 
-impl<'t, R: 't, T> Transducer<'t, R, T, T> for Id {
-    type Step = IdStep<'t, R, T>;
+impl<'t, R: 't, T> Transducer<'t, R, T, T> for Identity {
+    type Step = IdentityStep<'t, R, T>;
 
-    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> IdStep<'t, R, T> {
-        IdStep { step: Box::new(step) }
+    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> IdentityStep<'t, R, T> {
+        IdentityStep { step: Box::new(step) }
     }
 }
 
 /// The identity transducer.
-pub fn id() -> Id {
-    Id
+pub fn identity() -> Identity {
+    Identity
 }
 
 pub struct MappingStep<'t, R, T, F: 't> {
