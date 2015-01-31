@@ -96,3 +96,45 @@ where F: Transducer<'t, R, U, V>,
       G: Transducer<'t, R, T, U> {
     Composing { f: f, g: g }
 }
+
+#[test]
+fn compose_trans_is_associative() {
+    use super::mapping;
+    let f = |&: x: i32| x * 2;
+    let g = |&: x: i32| x + 2;
+    let h = |&: x: i32| x * x;
+    let step = |&: r: i32, t: i32| r + t;
+    let comp_left = compose_trans(compose_trans(mapping(&h), mapping(&g)), mapping(&f));
+    assert_eq!(comp_left.apply(step)(0, 42), 3532);
+    let step = |&: r: i32, t: i32| r + t;
+    let comp_right = compose_trans(mapping(&h), compose_trans(mapping(&g), mapping(&f)));
+    assert_eq!(comp_right.apply(step)(0, 42), 3532);
+}
+
+#[test]
+fn compose_trans_typechecks() {
+    use std::num;
+    use super::mapping;
+    let f = |&: x: Option<i16>| if let Some(n) = x { n } else { 0 };
+    let g = |&: x: u16| num::cast::<u16, i16>(x);
+
+    // Note the 'reversed' composition order, to map `f after g`, we compose
+    // as `mapping(g) after mapping(f)`.
+    let comp = compose_trans(mapping(&g), mapping(&f));
+    let step = |&: r: i16, t: i16| r + t;
+    assert_eq!(comp.apply(step)(0, 42), 42);
+    let step = |&: r: i16, t: i16| r + t;
+    assert_eq!(comp.apply(step)(0, 65535), 0);
+}
+
+#[test]
+fn compose_trans_with_id_is_id() {
+    use super::{identity, mapping};
+    let f = |&: x: i32| x * 2;
+    let step = |&: r: i32, t: i32| r + t;
+    let comp_left = compose_trans(identity(), mapping(&f));
+    assert_eq!(f(42), comp_left.apply(step)(0, 42));
+    let step = |&: r: i32, t: i32| r + t;
+    let comp_right = compose_trans(mapping(&f), identity());
+    assert_eq!(f(42), comp_right.apply(step)(0, 42));
+}
