@@ -34,7 +34,7 @@
 // hairy to do it correctly, I think. For now, it is just R -> R. It is wrong.
 // I know.
 
-#![feature(unboxed_closures)]
+#![feature(unboxed_closures, core)]
 
 pub use compose::{compose};
 pub use transform::{mapping, filtering};
