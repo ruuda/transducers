@@ -36,7 +36,7 @@
 
 #![feature(unboxed_closures, core)]
 
-pub use compose::{compose};
+pub use compose::{compose, compose_trans};
 pub use transform::{identity, mapping, filtering};
 
 mod compose;
@@ -110,10 +110,9 @@ fn filtering_on_iter() {
 #[test]
 fn compose_mapping_filtering() {
     let f = |&: x: i32| x * 2;
-    let p = |&: x: &i32| *x % 3 != 0;
-    // Note: this is not possible yet, we need a compose_trans.
-    // let t = compose(filtering(&p), mapping(&f));
-    // let v = vec!(2i32, 3, 4, 5, 6, 7, 11);
-    // let w = transduce(v.into_iter(), t);
-    // assert_eq!(w, vec!(4i32, 8, 10, 14, 22));
+    let p = |&: x: &i32| *x % 4 != 0;
+    let t = compose_trans(mapping(&f), filtering(&p));
+    let v = vec!(2i32, 3, 4, 5, 6, 7, 11);
+    let w = transduce(v.into_iter(), t);
+    assert_eq!(w, vec!(6i32, 10, 14, 22));
 }
