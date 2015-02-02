@@ -74,13 +74,13 @@ fn compose_with_id_is_id() {
 }
 
 /// The transducer composition `F` after `G`.
-pub struct Composing<R, T, U, V, F, G> {
+pub struct ComposedTransducer<R, T, U, V, F, G> {
     f: F,
     g: G
 }
 
 impl<'t, R, T, U, V, FStep: Fn(R, V) -> R, GStep: Fn(R, U) -> R, F, G>
-    Transducer<'t, R, T, V> for Composing<R, T, U, V, F, G>
+    Transducer<'t, R, T, V> for ComposedTransducer<R, T, U, V, F, G>
 where F: Transducer<'t, R, U, V, Step = FStep> + 't,
       G: Transducer<'t, R, T, U, Step = GStep> + 't,
       FStep: 't,
@@ -91,10 +91,10 @@ where F: Transducer<'t, R, U, V, Step = FStep> + 't,
     }
 }
 
-pub fn compose_trans<'t, R, T, U, V, F, G>(f: F, g: G) -> Composing<R, T, U, V, F, G>
+pub fn compose_trans<'t, R, T, U, V, F, G>(f: F, g: G) -> ComposedTransducer<R, T, U, V, F, G>
 where F: Transducer<'t, R, U, V>,
       G: Transducer<'t, R, T, U> {
-    Composing { f: f, g: g }
+    ComposedTransducer { f: f, g: g }
 }
 
 #[test]
