@@ -30,7 +30,7 @@ impl<'t, R, T> Fn<(R, T)> for IdentityStep<'t, R, T> {
 
 pub struct Identity;
 
-impl<'t, R: 't, T> Transducer<'t, R, T, T> for Identity {
+impl<'t, R: 't, T: 't> Transducer<'t, R, T, T> for Identity {
     type Step = IdentityStep<'t, R, T>;
 
     fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> IdentityStep<'t, R, T> {
@@ -61,7 +61,7 @@ pub struct Mapping<'t, F: 't> {
     f: &'t F
 }
 
-impl<'t, R: 't, T, U, F> Transducer<'t, R, T, U> for Mapping<'t, F>
+impl<'t, R: 't, T: 't, U, F> Transducer<'t, R, T, U> for Mapping<'t, F>
 where F: Fn(U) -> T + 't {
     type Step = MappingStep<'t, R, T, F>;
 
@@ -100,7 +100,7 @@ pub struct Filtering<'t, P: 't> {
     p: &'t P
 }
 
-impl <'t, R: 't, T, P> Transducer<'t, R, T, T> for Filtering<'t, P>
+impl <'t, R: 't, T: 't, P> Transducer<'t, R, T, T> for Filtering<'t, P>
 where P: Fn(&T) -> bool + 't {
     type Step = FilteringStep<'t, R, T, P>;
 
