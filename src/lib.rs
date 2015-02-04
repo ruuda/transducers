@@ -56,7 +56,7 @@ pub trait Transducer<'t, R, T, U> {
 pub fn transduce<'t, T, U, I: Iterator<Item = U>,
                  Step: Fn(Vec<T>, U) -> Vec<T> + 't,
                  Trans: Transducer<'t, Vec<T>, T, U, Step = Step> + 't>
-                 (mut iter: I, trans: Trans)
+                 (iter: I, trans: Trans)
                  -> Vec<T> where Trans::Step: 't {
     // The step function for a vector is simply append.
     fn append<TT>(mut r: Vec<TT>, t: TT) -> Vec<TT> { r.push(t); r }
