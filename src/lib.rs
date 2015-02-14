@@ -49,12 +49,17 @@ mod transform;
 
 /// An abstract tranformation/reduction of data.
 ///
-/// A transducer represents a transformation like `map`, `filter` or `fold`. It
-/// specifies how to manipulate the data, independent of the way in which that
-/// data might arrive.
+/// A transducer represents a transformation or reduction like `map`, `filter`
+/// or `fold`. It specifies how to manipulate the data, independent of the way
+/// in which that data might arrive.
+///
+/// While the trait (and especially its implementations) may look scary at
+/// first, you rarely need to deal with this trait directly unless you intend
+/// to implement your own transformation/reduction functions that cannot be
+/// expressed as a composition of standard transducers.
 pub trait Transducer<'t, R, T, U> {
 
-    /// The type of a transduced step.
+    /// The type of step that application of the transducer produces.
     type Step: Fn(R, U) -> R + 't;
 
     /// Applies the transducer to the step function to obtain a new step function.
