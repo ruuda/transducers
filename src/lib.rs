@@ -70,7 +70,7 @@ pub trait Transducer<'t, R, T, U> {
 /// This is an alternative to the `IteratorExt` methods in the standard library.
 ///
 /// ```
-/// use transducers::{transduce, Mapping};
+/// # use transducers::{transduce, Mapping};
 /// let v = vec!(2i32, 3, 5, 7, 11);
 /// let f = |&x| x * 2;
 /// let v_trans = transduce(&mut v.iter(), Mapping::new(&f));
