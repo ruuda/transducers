@@ -37,7 +37,7 @@
 #![feature(unboxed_closures, core)]
 
 pub use compose::{compose, compose_trans};
-pub use transform::{identity, mapping, filtering};
+pub use transform::{Filtering, Identity, Mapping};
 
 mod compose;
 mod transform;
@@ -53,10 +53,10 @@ pub trait Transducer<'t, R, T, U> {
 }
 
 // To create a Transduce trait, I think higher-ranked types would be required.
-pub fn transduce<'t, T, U, I: Iterator<Item = U>,
+pub fn transduce<'t, 'i, T, U, I: Iterator<Item = U>,
                  Step: Fn(Vec<T>, U) -> Vec<T> + 't,
                  Trans: Transducer<'t, Vec<T>, T, U, Step = Step> + 't>
-                 (iter: I, trans: Trans)
+                 (iter: &'i mut I, trans: Trans)
                  -> Vec<T> where Trans::Step: 't {
     // The step function for a vector is simply append.
     fn append<TT>(mut r: Vec<TT>, t: TT) -> Vec<TT> { r.push(t); r }
@@ -76,19 +76,20 @@ pub fn transduce<'t, T, U, I: Iterator<Item = U>,
 #[test]
 fn identity_is_identity_on_iter() {
     let v = vec!(2i32, 3, 5, 7, 11);
-    let w = transduce(v.clone().into_iter(), identity());
+    let w = transduce(&mut v.clone().into_iter(), Identity::new());
     assert_eq!(v, w);
 }
 
 #[test]
 fn mapping_on_iter() {
+    let u = vec!(2i32, 3, 5, 7, 11);
+    let v = u.clone();
     let f = |&: x: &i32| *x * 2;
     let g = |&: x: i32| x * 2;
-    let m = mapping(&f);
-    let n = mapping(&g);
-    let v = vec!(2i32, 3, 5, 7, 11);
-    let w = transduce(v.iter(), m);
-    let x = transduce(v.into_iter(), n);
+    let m = Mapping::new(&f);
+    let n = Mapping::new(&g);
+    let w = transduce(&mut u.iter(), m);
+    let x = transduce(&mut v.into_iter(), n);
     assert_eq!(w, vec!(4i32, 6, 10, 14, 22));
     assert_eq!(w, x);
 }
@@ -97,12 +98,11 @@ fn mapping_on_iter() {
 fn filtering_on_iter() {
     let p = |&: x: &i32| *x % 2 == 0;
     let q = |&: x: &i32| *x % 3 != 0;
-    let f = filtering(&p);
-    let h = filtering(&q);
+    let f = Filtering::new(&p);
+    let h = Filtering::new(&q);
     let v = vec!(2i32, 3, 5, 6, 7, 11);
-    // TODO: How can we not consume the vector for `Copy` types?
-    let w = transduce(v.clone().into_iter(), f);
-    let x = transduce(v.clone().into_iter(), h);
+    let w = transduce(&mut v.iter().cloned(), f);
+    let x = transduce(&mut v.iter().cloned(), h);
     assert_eq!(w, vec!(2i32, 6));
     assert_eq!(x, vec!(2i32, 5, 7, 11));
 }
@@ -111,8 +111,8 @@ fn filtering_on_iter() {
 fn compose_mapping_filtering() {
     let f = |&: x: i32| x * 2;
     let p = |&: x: &i32| *x % 4 != 0;
-    let t = compose_trans(mapping(&f), filtering(&p));
+    let t = compose_trans(Mapping::new(&f), Filtering::new(&p));
     let v = vec!(2i32, 3, 4, 5, 6, 7, 11);
-    let w = transduce(v.into_iter(), t);
+    let w = transduce(&mut v.into_iter(), t);
     assert_eq!(w, vec!(6i32, 10, 14, 22));
 }

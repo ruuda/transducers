@@ -28,6 +28,7 @@ impl<'t, R, T> Fn<(R, T)> for IdentityStep<'t, R, T> {
     }
 }
 
+/// The identity transducer.
 pub struct Identity;
 
 impl<'t, R: 't, T: 't> Transducer<'t, R, T, T> for Identity {
@@ -38,9 +39,10 @@ impl<'t, R: 't, T: 't> Transducer<'t, R, T, T> for Identity {
     }
 }
 
-/// The identity transducer.
-pub fn identity() -> Identity {
-    Identity
+impl Identity {
+    pub fn new() -> Identity {
+        Identity
+    }
 }
 
 pub struct MappingStep<'t, R, T, F: 't> {
@@ -57,12 +59,13 @@ where F: Fn(U) -> T + 't {
     }
 }
 
-pub struct Mapping<'t, F: 't> {
+pub struct Mapping<'t, T: 't, U, F: Fn(U) -> T + 't> {
     f: &'t F
 }
 
-impl<'t, R: 't, T: 't, U, F> Transducer<'t, R, T, U> for Mapping<'t, F>
-where F: Fn(U) -> T + 't {
+impl<'t, R: 't, T: 't, U, F: Fn(U) -> T + 't> Transducer<'t, R, T, U>
+for Mapping<'t, T, U, F> {
+
     type Step = MappingStep<'t, R, T, F>;
 
     fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> MappingStep<'t, R, T, F> {
@@ -73,9 +76,11 @@ where F: Fn(U) -> T + 't {
     }
 }
 
-/// The mapping transducer, applies `f` to every element.
-pub fn mapping<'f, T, U, F: Fn(U) -> T + 'f>(f: &'f F) -> Mapping<'f, F> {
-    Mapping { f: f }
+impl<'f, T: 'f, U, F: Fn(U) -> T + 'f> Mapping<'f, T, U, F> {
+    /// The mapping transducer that applies `f` to every element.
+    pub fn new(f: &'f F) -> Mapping<'f, T, U, F> {
+        Mapping { f: f }
+    }
 }
 
 pub struct FilteringStep<'t, R, T, P: 't> {
@@ -96,15 +101,16 @@ where P: Fn(&T) -> bool + 't {
     }
 }
 
-pub struct Filtering<'t, P: 't> {
-    p: &'t P
+pub struct Filtering<'p, T: 'p, P: Fn(&T) -> bool + 'p> {
+    p: &'p P
 }
 
-impl <'t, R: 't, T: 't, P> Transducer<'t, R, T, T> for Filtering<'t, P>
-where P: Fn(&T) -> bool + 't {
-    type Step = FilteringStep<'t, R, T, P>;
+impl<'p, R: 'p, T: 'p, P: Fn(&T) -> bool + 'p> Transducer<'p, R, T, T>
+for Filtering<'p, T, P> {
 
-    fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> FilteringStep<'t, R, T, P> {
+    type Step = FilteringStep<'p, R, T, P>;
+
+    fn apply<Step: Fn(R, T) -> R + 'p>(&self, step: Step) -> FilteringStep<'p, R, T, P> {
         FilteringStep {
             step: Box::new(step),
             p: self.p
@@ -112,7 +118,9 @@ where P: Fn(&T) -> bool + 't {
     }
 }
 
-/// The filtering transducer passes through all elements for which the predicate `p` is true.
-pub fn filtering<'p, T, P: Fn(&T) -> bool + 'p>(p: &'p P) -> Filtering<'p, P> {
-    Filtering { p: p }
+impl<'p, T, P: Fn(&T) -> bool + 'p> Filtering<'p, T, P> {
+    /// The filtering transducer passes through all elements for which the predicate `p` is true.
+    pub fn new(p: &'p P) -> Filtering<'p, T, P> {
+        Filtering { p: p }
+    }
 }
