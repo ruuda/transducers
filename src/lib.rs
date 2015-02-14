@@ -34,6 +34,11 @@
 // hairy to do it correctly, I think. For now, it is just R -> R. It is wrong.
 // I know.
 
+//! Transducers, a transducer library for Rust.
+//!
+//! TODO: Add some examples here.
+
+#![warn(missing_docs)]
 #![feature(unboxed_closures, core)]
 
 pub use compose::{compose, compose_trans};
@@ -48,11 +53,30 @@ mod transform;
 /// specifies how to manipulate the data, independent of the way in which that
 /// data might arrive.
 pub trait Transducer<'t, R, T, U> {
+
+    /// The type of a transduced step.
     type Step: Fn(R, U) -> R + 't;
+
+    /// Applies the transducer to the step function to obtain a new step function.
     fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> Self::Step;
 }
 
-// To create a Transduce trait, I think higher-ranked types would be required.
+// NOTE: To create a Transduce trait, I think higher-ranked types would be required.
+// TODO: Transduce into an interator, do not collect immediately.
+// TODO: We use the size hint of the iterator, but even the min_sz could be an
+//       overestimation due to a filtering transducer.
+/// Transduces the iterator `iter` with the transducer `trans`.
+///
+/// This is an alternative to the `IteratorExt` methods in the standard library.
+///
+/// ```
+/// use transducers::{transduce, Mapping};
+/// let v = vec!(2i32, 3, 5, 7, 11);
+/// let f = |&x| x * 2;
+/// let v_trans = transduce(&mut v.iter(), Mapping::new(&f));
+/// let v_map = v.iter().map(f).collect();
+/// assert_eq!(v_trans, v_map);
+/// ```
 pub fn transduce<'t, 'i, T, U, I: Iterator<Item = U>,
                  Step: Fn(Vec<T>, U) -> Vec<T> + 't,
                  Trans: Transducer<'t, Vec<T>, T, U, Step = Step> + 't>

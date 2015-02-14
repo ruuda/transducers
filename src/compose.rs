@@ -91,6 +91,7 @@ where F: Transducer<'t, R, U, V, Step = FStep> + 't,
     }
 }
 
+/// Creates a transducer that is the composition `f` after `g`.
 pub fn compose_trans<'t, R, T, U, V, F, G>(f: F, g: G) -> ComposedTransducer<R, T, U, V, F, G>
 where F: Transducer<'t, R, U, V>,
       G: Transducer<'t, R, T, U> {

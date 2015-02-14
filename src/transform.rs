@@ -40,6 +40,7 @@ impl<'t, R: 't, T: 't> Transducer<'t, R, T, T> for Identity {
 }
 
 impl Identity {
+    /// Produces the identity transducer.
     pub fn new() -> Identity {
         Identity
     }
@@ -59,6 +60,7 @@ where F: Fn(U) -> T + 't {
     }
 }
 
+/// The mapping transducer that applies a function to every element.
 pub struct Mapping<'t, T: 't, U, F: Fn(U) -> T + 't> {
     f: &'t F
 }
@@ -101,6 +103,7 @@ where P: Fn(&T) -> bool + 't {
     }
 }
 
+/// The filtering transducer that passes through elements that satisfy a predicate.
 pub struct Filtering<'p, T: 'p, P: Fn(&T) -> bool + 'p> {
     p: &'p P
 }
