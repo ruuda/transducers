@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::marker::PhantomData;
 use super::Transducer;
 
 pub struct IdentityStep<'t, R, T> {
@@ -62,7 +63,8 @@ where F: Fn(U) -> T + 't {
 
 /// The mapping transducer that applies a function to every element.
 pub struct Mapping<'t, T: 't, U, F: Fn(U) -> T + 't> {
-    f: &'t F
+    f: &'t F,
+    phantom_f: PhantomData<fn(U) -> T>
 }
 
 impl<'t, R: 't, T: 't, U, F: Fn(U) -> T + 't> Transducer<'t, R, T, U>
@@ -81,7 +83,7 @@ for Mapping<'t, T, U, F> {
 impl<'f, T: 'f, U, F: Fn(U) -> T + 'f> Mapping<'f, T, U, F> {
     /// The mapping transducer that applies `f` to every element.
     pub fn new(f: &'f F) -> Mapping<'f, T, U, F> {
-        Mapping { f: f }
+        Mapping { f: f, phantom_f: PhantomData }
     }
 }
 
@@ -105,7 +107,8 @@ where P: Fn(&T) -> bool + 't {
 
 /// The filtering transducer that passes through elements that satisfy a predicate.
 pub struct Filtering<'p, T: 'p, P: Fn(&T) -> bool + 'p> {
-    p: &'p P
+    p: &'p P,
+    phantom_p: PhantomData<fn(&T) -> bool>
 }
 
 impl<'p, R: 'p, T: 'p, P: Fn(&T) -> bool + 'p> Transducer<'p, R, T, T>
@@ -124,6 +127,6 @@ for Filtering<'p, T, P> {
 impl<'p, T, P: Fn(&T) -> bool + 'p> Filtering<'p, T, P> {
     /// The filtering transducer passes through all elements for which the predicate `p` is true.
     pub fn new(p: &'p P) -> Filtering<'p, T, P> {
-        Filtering { p: p }
+        Filtering { p: p, phantom_p: PhantomData }
     }
 }
