@@ -14,12 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::marker::PhantomData;
 use super::Transducer;
 
 /// The function composition `F` after `G`.
 pub struct Composed<X, Y, Z, F, G> {
     f: F,
-    g: G
+    g: G,
+    phantom_f: PhantomData<fn(Y) -> Z>,
+    phantom_g: PhantomData<fn(X) -> Y>
 }
 
 impl<X, Y, Z, F, G> Fn<(X,)> for Composed<X, Y, Z, F, G>
@@ -38,7 +41,12 @@ where F: Fn(Y) -> Z,
 pub fn compose<X, Y, Z, F, G>(f: F, g: G) -> Composed<X, Y, Z, F, G>
 where F: Fn(Y) -> Z,
       G: Fn(X) -> Y {
-    Composed { f: f, g: g }
+    Composed {
+        f: f,
+        g: g,
+        phantom_f: PhantomData,
+        phantom_g: PhantomData
+    }
 }
 
 #[test]
@@ -76,7 +84,10 @@ fn compose_with_id_is_id() {
 /// The transducer composition `F` after `G`.
 pub struct ComposedTransducer<R, T, U, V, F, G> {
     f: F,
-    g: G
+    g: G,
+    phantom_fstep: PhantomData<fn(R, V) -> R>,
+    phantom_gstep: PhantomData<fn(R, U) -> R>,
+    phantom_step: PhantomData<fn(R, T) -> R>
 }
 
 impl<'t, R, T, U, V, FStep: Fn(R, V) -> R, GStep: Fn(R, U) -> R, F, G>
@@ -95,7 +106,13 @@ where F: Transducer<'t, R, U, V, Step = FStep> + 't,
 pub fn compose_trans<'t, R, T, U, V, F, G>(f: F, g: G) -> ComposedTransducer<R, T, U, V, F, G>
 where F: Transducer<'t, R, U, V>,
       G: Transducer<'t, R, T, U> {
-    ComposedTransducer { f: f, g: g }
+    ComposedTransducer {
+        f: f,
+        g: g,
+        phantom_fstep: PhantomData,
+        phantom_gstep: PhantomData,
+        phantom_step: PhantomData
+    }
 }
 
 #[test]
