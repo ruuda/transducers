@@ -85,9 +85,8 @@ fn compose_with_id_is_id() {
 pub struct ComposedTransducer<R, T, U, V, F, G> {
     f: F,
     g: G,
-    phantom_fstep: PhantomData<fn(R, V) -> R>,
-    phantom_gstep: PhantomData<fn(R, U) -> R>,
-    phantom_step: PhantomData<fn(R, T) -> R>
+    phantom_f: PhantomData<fn(fn(R, U) -> R) -> fn(R, V) -> R>,
+    phantom_g: PhantomData<fn(fn(R, T) -> R) -> fn(R, U) -> R>
 }
 
 impl<'t, R, T, U, V, FStep: Fn(R, V) -> R, GStep: Fn(R, U) -> R, F, G>
@@ -109,9 +108,8 @@ where F: Transducer<'t, R, U, V>,
     ComposedTransducer {
         f: f,
         g: g,
-        phantom_fstep: PhantomData,
-        phantom_gstep: PhantomData,
-        phantom_step: PhantomData
+        phantom_f: PhantomData,
+        phantom_g: PhantomData
     }
 }
 
