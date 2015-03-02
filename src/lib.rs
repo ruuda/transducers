@@ -113,8 +113,8 @@ fn identity_is_identity_on_iter() {
 fn mapping_on_iter() {
     let u = vec!(2i32, 3, 5, 7, 11);
     let v = u.clone();
-    let f = |&: x: &i32| *x * 2;
-    let g = |&: x: i32| x * 2;
+    let f = |x: &i32| *x * 2;
+    let g = |x: i32| x * 2;
     let m = Mapping::new(&f);
     let n = Mapping::new(&g);
     let w = transduce(&mut u.iter(), m);
@@ -125,8 +125,8 @@ fn mapping_on_iter() {
 
 #[test]
 fn filtering_on_iter() {
-    let p = |&: x: &i32| *x % 2 == 0;
-    let q = |&: x: &i32| *x % 3 != 0;
+    let p = |x: &i32| *x % 2 == 0;
+    let q = |x: &i32| *x % 3 != 0;
     let f = Filtering::new(&p);
     let h = Filtering::new(&q);
     let v = vec!(2i32, 3, 5, 6, 7, 11);
@@ -138,8 +138,8 @@ fn filtering_on_iter() {
 
 #[test]
 fn compose_mapping_filtering() {
-    let f = |&: x: i32| x * 2;
-    let p = |&: x: &i32| *x % 4 != 0;
+    let f = |x: i32| x * 2;
+    let p = |x: &i32| *x % 4 != 0;
     let t = compose_trans(Mapping::new(&f), Filtering::new(&p));
     let v = vec!(2i32, 3, 4, 5, 6, 7, 11);
     let w = transduce(&mut v.into_iter(), t);
