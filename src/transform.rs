@@ -17,12 +17,26 @@
 use std::marker::PhantomData;
 use super::Transducer;
 
+// TODO: Would it be possible to take Fn(R, T) -> R as a parameter,
+// and then have different kind of step functions for once, mut and borrow?
 pub struct IdentityStep<'t, R, T> {
     step: Box<Fn(R, T) -> R + 't>
 }
 
-impl<'t, R, T> Fn<(R, T)> for IdentityStep<'t, R, T> {
+impl<'t, R, T> FnOnce<(R, T)> for IdentityStep<'t, R, T> {
     type Output = R;
+    extern "rust-call" fn call_once(self, args: (R, T)) -> R {
+        self.call(args)
+    }
+}
+
+impl<'t, R, T> FnMut<(R, T)> for IdentityStep<'t, R, T> {
+    extern "rust-call" fn call_mut(&mut self, args: (R, T)) -> R {
+        self.call(args)
+    }
+}
+
+impl<'t, R, T> Fn<(R, T)> for IdentityStep<'t, R, T> {
     extern "rust-call" fn call(&self, args: (R, T)) -> R {
         let (r, t) = args;
         (*self.step)(r, t)
@@ -52,9 +66,23 @@ pub struct MappingStep<'t, R, T, F: 't> {
     f: &'t F
 }
 
-impl<'t, R, T, U, F> Fn<(R, U)> for MappingStep<'t, R, T, F>
+impl<'t, R, T, U, F> FnOnce<(R, U)> for MappingStep<'t, R, T, F>
 where F: Fn(U) -> T + 't {
     type Output = R;
+    extern "rust-call" fn call_once(self, args: (R, U)) -> R {
+        self.call(args)
+    }
+}
+
+impl<'t, R, T, U, F> FnMut<(R, U)> for MappingStep<'t, R, T, F>
+where F: Fn(U) -> T + 't {
+    extern "rust-call" fn call_mut(&mut self, args: (R, U)) -> R {
+        self.call(args)
+    }
+}
+
+impl<'t, R, T, U, F> Fn<(R, U)> for MappingStep<'t, R, T, F>
+where F: Fn(U) -> T + 't {
     extern "rust-call" fn call(&self, args: (R, U)) -> R {
         let (r, u) = args;
         (*self.step)(r, (self.f)(u))
@@ -92,9 +120,23 @@ pub struct FilteringStep<'t, R, T, P: 't> {
     p: &'t P
 }
 
-impl<'t, R, T, P> Fn<(R, T)> for FilteringStep<'t, R, T, P>
+impl<'t, R, T, P> FnOnce<(R, T)> for FilteringStep<'t, R, T, P>
 where P: Fn(&T) -> bool + 't {
     type Output = R;
+    extern "rust-call" fn call_once(self, args: (R, T)) -> R {
+        self.call(args)
+    }
+}
+
+impl<'t, R, T, P> FnMut<(R, T)> for FilteringStep<'t, R, T, P>
+where P: Fn(&T) -> bool + 't {
+    extern "rust-call" fn call_mut(&mut self, args: (R, T)) -> R {
+        self.call(args)
+    }
+}
+
+impl<'t, R, T, P> Fn<(R, T)> for FilteringStep<'t, R, T, P>
+where P: Fn(&T) -> bool + 't {
     extern "rust-call" fn call(&self, args: (R, T)) -> R {
         let (r, t) = args;
         if (self.p)(&t) {
