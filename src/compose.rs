@@ -58,8 +58,8 @@ where F: Fn(Y) -> Z,
 
 /// Composes the functions `f` and `g` to the function `f` after `g`.
 pub fn compose<X, Y, Z, F, G>(f: F, g: G) -> Composed<X, Y, Z, F, G>
-where F: Fn(Y) -> Z,
-      G: Fn(X) -> Y {
+where F: FnOnce(Y) -> Z,
+      G: FnOnce(X) -> Y {
     Composed {
         f: f,
         g: g,
