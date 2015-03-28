@@ -37,8 +37,7 @@ impl<'t, R, T> FnMut<(R, T)> for IdentityStep<'t, R, T> {
 }
 
 impl<'t, R, T> Fn<(R, T)> for IdentityStep<'t, R, T> {
-    extern "rust-call" fn call(&self, args: (R, T)) -> R {
-        let (r, t) = args;
+    extern "rust-call" fn call(&self, (r, t): (R, T)) -> R {
         (*self.step)(r, t)
     }
 }
@@ -83,8 +82,7 @@ where F: Fn(U) -> T + 't {
 
 impl<'t, R, T, U, F> Fn<(R, U)> for MappingStep<'t, R, T, F>
 where F: Fn(U) -> T + 't {
-    extern "rust-call" fn call(&self, args: (R, U)) -> R {
-        let (r, u) = args;
+    extern "rust-call" fn call(&self, (r, u): (R, U)) -> R {
         (*self.step)(r, (self.f)(u))
     }
 }
@@ -137,8 +135,7 @@ where P: Fn(&T) -> bool + 't {
 
 impl<'t, R, T, P> Fn<(R, T)> for FilteringStep<'t, R, T, P>
 where P: Fn(&T) -> bool + 't {
-    extern "rust-call" fn call(&self, args: (R, T)) -> R {
-        let (r, t) = args;
+    extern "rust-call" fn call(&self, (r, t): (R, T)) -> R {
         if (self.p)(&t) {
             (*self.step)(r, t)
         } else {

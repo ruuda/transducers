@@ -29,8 +29,7 @@ impl<X, Y, Z, F, G> FnOnce<(X,)> for Composed<X, Y, Z, F, G>
 where F: FnOnce(Y) -> Z,
       G: FnOnce(X) -> Y {
     type Output = Z;
-    extern "rust-call" fn call_once(self, arg: (X, )) -> Z {
-        let (x,) = arg;
+    extern "rust-call" fn call_once(self, (x,): (X, )) -> Z {
         let y = (self.g)(x);
         let z = (self.f)(y);
         z
@@ -40,8 +39,7 @@ where F: FnOnce(Y) -> Z,
 impl<X, Y, Z, F, G> FnMut<(X,)> for Composed<X, Y, Z, F, G>
 where F: FnMut(Y) -> Z,
       G: FnMut(X) -> Y {
-    extern "rust-call" fn call_mut(&mut self, arg: (X, )) -> Z {
-        let (x,) = arg;
+    extern "rust-call" fn call_mut(&mut self, (x,): (X, )) -> Z {
         let y = (self.g)(x);
         let z = (self.f)(y);
         z
@@ -51,8 +49,7 @@ where F: FnMut(Y) -> Z,
 impl<X, Y, Z, F, G> Fn<(X,)> for Composed<X, Y, Z, F, G>
 where F: Fn(Y) -> Z,
       G: Fn(X) -> Y {
-    extern "rust-call" fn call(&self, arg: (X,)) -> Z {
-        let (x,) = arg;
+    extern "rust-call" fn call(&self, (x,): (X,)) -> Z {
         let y = (self.g)(x);
         let z = (self.f)(y);
         z
