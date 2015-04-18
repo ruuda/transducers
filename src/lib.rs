@@ -79,7 +79,7 @@ pub trait Transducer<'t, R, T, U> {
 /// let v = vec!(2i32, 3, 5, 7, 11);
 /// let f = |&x| x * 2;
 /// let v_trans = transduce(&mut v.iter(), Mapping::new(&f));
-/// let v_map = v.iter().map(f).collect();
+/// let v_map: Vec<i32> = v.iter().map(f).collect();
 /// assert_eq!(v_trans, v_map);
 /// ```
 pub fn transduce<'t, 'i, T, U, I: Iterator<Item = U>,
