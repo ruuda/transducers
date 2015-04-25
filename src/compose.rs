@@ -109,8 +109,8 @@ pub struct ComposedTransducer<R, T, U, V, F, G> {
 
 impl<'t, R, T, U, V, FStep: Fn(R, V) -> R, GStep: Fn(R, U) -> R, F, G>
     Transducer<'t, R, T, V> for ComposedTransducer<R, T, U, V, F, G>
-where F: Transducer<'t, R, U, V, Step = FStep> + 't,
-      G: Transducer<'t, R, T, U, Step = GStep> + 't,
+where F: Transducer<'t, R, U, V, Step = FStep>,
+      G: Transducer<'t, R, T, U, Step = GStep>,
       FStep: 't,
       GStep: 't {
     type Step = FStep;

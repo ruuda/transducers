@@ -83,8 +83,8 @@ pub trait Transducer<'t, R, T, U> {
 /// assert_eq!(v_trans, v_map);
 /// ```
 pub fn transduce<'t, 'i, T, U, I: Iterator<Item = U>,
-                 Step: Fn(Vec<T>, U) -> Vec<T> + 't,
-                 Trans: Transducer<'t, Vec<T>, T, U, Step = Step> + 't>
+                 Step: Fn(Vec<T>, U) -> Vec<T>,
+                 Trans: Transducer<'t, Vec<T>, T, U, Step = Step>>
                  (iter: &'i mut I, trans: Trans)
                  -> Vec<T> where Trans::Step: 't {
     // The step function for a vector is simply append.

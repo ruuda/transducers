@@ -66,7 +66,7 @@ pub struct MappingStep<'t, R, T, F: 't> {
 }
 
 impl<'t, R, T, U, F> FnOnce<(R, U)> for MappingStep<'t, R, T, F>
-where F: Fn(U) -> T + 't {
+where F: Fn(U) -> T {
     type Output = R;
     extern "rust-call" fn call_once(self, args: (R, U)) -> R {
         self.call(args)
@@ -74,14 +74,14 @@ where F: Fn(U) -> T + 't {
 }
 
 impl<'t, R, T, U, F> FnMut<(R, U)> for MappingStep<'t, R, T, F>
-where F: Fn(U) -> T + 't {
+where F: Fn(U) -> T {
     extern "rust-call" fn call_mut(&mut self, args: (R, U)) -> R {
         self.call(args)
     }
 }
 
 impl<'t, R, T, U, F> Fn<(R, U)> for MappingStep<'t, R, T, F>
-where F: Fn(U) -> T + 't {
+where F: Fn(U) -> T {
     extern "rust-call" fn call(&self, (r, u): (R, U)) -> R {
         (*self.step)(r, (self.f)(u))
     }
@@ -119,7 +119,7 @@ pub struct FilteringStep<'t, R, T, P: 't> {
 }
 
 impl<'t, R, T, P> FnOnce<(R, T)> for FilteringStep<'t, R, T, P>
-where P: Fn(&T) -> bool + 't {
+where P: Fn(&T) -> bool {
     type Output = R;
     extern "rust-call" fn call_once(self, args: (R, T)) -> R {
         self.call(args)
@@ -127,14 +127,14 @@ where P: Fn(&T) -> bool + 't {
 }
 
 impl<'t, R, T, P> FnMut<(R, T)> for FilteringStep<'t, R, T, P>
-where P: Fn(&T) -> bool + 't {
+where P: Fn(&T) -> bool {
     extern "rust-call" fn call_mut(&mut self, args: (R, T)) -> R {
         self.call(args)
     }
 }
 
 impl<'t, R, T, P> Fn<(R, T)> for FilteringStep<'t, R, T, P>
-where P: Fn(&T) -> bool + 't {
+where P: Fn(&T) -> bool {
     extern "rust-call" fn call(&self, (r, t): (R, T)) -> R {
         if (self.p)(&t) {
             (*self.step)(r, t)
