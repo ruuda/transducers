@@ -82,9 +82,8 @@ fn compose_is_associative() {
 
 #[test]
 fn compose_typechecks() {
-    use std::num;
-    let f = |x: Option<i16>| if let Some(n) = x { n } else { 0 };
-    let g = |x: u16| num::cast::<u16, i16>(x);
+    let f = |x: Option<u16>| if let Some(n) = x { n } else { 0 };
+    let g = |x: u16| if x < 100 { Some(x) } else { None };
     let h = compose(f, g);
     assert_eq!(h(42), 42);
     assert_eq!(h(65535), 0);
@@ -148,17 +147,16 @@ fn compose_trans_is_associative() {
 
 #[test]
 fn compose_trans_typechecks() {
-    use std::num;
     use super::Mapping;
-    let f = |x: Option<i16>| if let Some(n) = x { n } else { 0 };
-    let g = |x: u16| num::cast::<u16, i16>(x);
+    let f = |x: Option<u16>| if let Some(n) = x { n } else { 0 };
+    let g = |x: u16| if x < 100 { Some(x) } else { None };
 
     // Note the 'reversed' composition order, to map `f after g`, we compose
     // as `mapping(g) after mapping(f)`.
     let comp = compose_trans(Mapping::new(&g), Mapping::new(&f));
-    let step = |r: i16, t: i16| r + t;
+    let step = |r: u16, t: u16| r + t;
     assert_eq!(comp.apply(step)(0, 42), 42);
-    let step = |r: i16, t: i16| r + t;
+    let step = |r: u16, t: u16| r + t;
     assert_eq!(comp.apply(step)(0, 65535), 0);
 }
 
