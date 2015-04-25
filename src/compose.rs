@@ -70,20 +70,20 @@ where F: FnOnce(Y) -> Z,
 
 #[test]
 fn compose_is_associative() {
-    let f = |x: i32| x * 2;
-    let g = |x: i32| x + 2;
-    let h = |x: i32| x * x;
+    let f = |x| x * 2;
+    let g = |x| x + 2;
+    let h = |x| x * x;
     assert_eq!(compose(compose(f, g), h)(42), 3532);
-    let f = |x: i32| x * 2;
-    let g = |x: i32| x + 2;
-    let h = |x: i32| x * x;
+    let f = |x| x * 2;
+    let g = |x| x + 2;
+    let h = |x| x * x;
     assert_eq!(compose(f, compose(g, h))(42), 3532);
 }
 
 #[test]
 fn compose_typechecks() {
-    let f = |x: Option<u16>| if let Some(n) = x { n } else { 0 };
-    let g = |x: u16| if x < 100 { Some(x) } else { None };
+    let f = |x| if let Some(n) = x { n } else { 0 };
+    let g = |x| if x < 100 { Some(x) } else { None };
     let h = compose(f, g);
     assert_eq!(h(42), 42);
     assert_eq!(h(65535), 0);
@@ -91,11 +91,11 @@ fn compose_typechecks() {
 
 #[test]
 fn compose_with_id_is_id() {
-    let id = |x: i32| x;
-    let ff = |x: i32| x * 2;
+    let id = |x| x;
+    let ff = |x| x * 2;
     assert_eq!(ff(42), compose(id, ff)(42));
-    let id = |x: i32| x;
-    let ff = |x: i32| x * 2;
+    let id = |x| x;
+    let ff = |x| x * 2;
     assert_eq!(ff(42), compose(ff, id)(42));
 }
 
@@ -134,13 +134,13 @@ where F: Transducer<'t, R, U, V>,
 #[test]
 fn compose_trans_is_associative() {
     use super::Mapping;
-    let f = |x: i32| x * 2;
-    let g = |x: i32| x + 2;
-    let h = |x: i32| x * x;
-    let step = |r: i32, t: i32| r + t;
+    let f = |x| x * 2;
+    let g = |x| x + 2;
+    let h = |x| x * x;
+    let step = |r, t| r + t;
     let comp_left = compose_trans(compose_trans(Mapping::new(&h), Mapping::new(&g)), Mapping::new(&f));
     assert_eq!(comp_left.apply(step)(0, 42), 3532);
-    let step = |r: i32, t: i32| r + t;
+    let step = |r, t| r + t;
     let comp_right = compose_trans(Mapping::new(&h), compose_trans(Mapping::new(&g), Mapping::new(&f)));
     assert_eq!(comp_right.apply(step)(0, 42), 3532);
 }
@@ -148,26 +148,26 @@ fn compose_trans_is_associative() {
 #[test]
 fn compose_trans_typechecks() {
     use super::Mapping;
-    let f = |x: Option<u16>| if let Some(n) = x { n } else { 0 };
-    let g = |x: u16| if x < 100 { Some(x) } else { None };
+    let f = |x| if let Some(n) = x { n } else { 0 };
+    let g = |x| if x < 100 { Some(x) } else { None };
 
     // Note the 'reversed' composition order, to map `f after g`, we compose
     // as `mapping(g) after mapping(f)`.
     let comp = compose_trans(Mapping::new(&g), Mapping::new(&f));
-    let step = |r: u16, t: u16| r + t;
+    let step = |r, t| r + t;
     assert_eq!(comp.apply(step)(0, 42), 42);
-    let step = |r: u16, t: u16| r + t;
+    let step = |r, t| r + t;
     assert_eq!(comp.apply(step)(0, 65535), 0);
 }
 
 #[test]
 fn compose_trans_with_id_is_id() {
     use super::{Identity, Mapping};
-    let f = |x: i32| x * 2;
-    let step = |r: i32, t: i32| r + t;
+    let f = |x| x * 2;
+    let step = |r, t| r + t;
     let comp_left = compose_trans(Identity::new(), Mapping::new(&f));
     assert_eq!(f(42), comp_left.apply(step)(0, 42));
-    let step = |r: i32, t: i32| r + t;
+    let step = |r, t| r + t;
     let comp_right = compose_trans(Mapping::new(&f), Identity::new());
     assert_eq!(f(42), comp_right.apply(step)(0, 42));
 }
