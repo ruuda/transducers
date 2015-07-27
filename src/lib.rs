@@ -65,13 +65,40 @@ pub trait Transducer<'t, R, T, U> {
     fn apply<Step: Fn(R, T) -> R + 't>(&self, step: Step) -> Self::Step;
 }
 
+/// Applies the `fold` reduction operation on `iter` transformed by `trans`.
+pub fn reduce_iter<'t, R, T, U, I: Iterator<Item = U>,
+                   Fold: Fn(R, T) -> R + 't,
+                   Trans: Transducer<'t, R, T, U>>
+                  (iter: I, seed: R, fold: Fold, trans: Trans) -> R
+                   where Trans::Step: 't {
+    let step = trans.apply(fold);
+    let mut state = seed;
+    for t in iter {
+        state = step(state, t);
+    }
+    state
+}
+
+#[test]
+fn reduce_iter_sum() {
+    let items = [2, 3, 5, 7, 11, 13, 17, 19];
+    let sum = reduce_iter(items.iter(), 0, |a, x| a + x, Identity::new());
+    assert_eq!(sum, 77);
+
+    // TODO: How to make this compile?
+    // let is_even = |&x| x % 2 == 0;
+    // let sum = reduce_iter(items.iter(), 0, |a, x| a + x, Filtering::new(&is_even));
+    // assert_eq!(sum, 75);
+}
+
 // NOTE: To create a Transduce trait, I think higher-ranked types would be required.
 // TODO: Transduce into an interator, do not collect immediately.
 // TODO: We use the size hint of the iterator, but even the min_sz could be an
 //       overestimation due to a filtering transducer.
 /// Transduces the iterator `iter` with the transducer `trans`.
 ///
-/// This is an alternative to the `IteratorExt` methods in the standard library.
+/// This is an alternative to methods like `map` and `filter` in the standard
+/// library.
 ///
 /// ```
 /// # use transducers::{transduce, Mapping};
