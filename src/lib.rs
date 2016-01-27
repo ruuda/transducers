@@ -38,7 +38,7 @@
 //! TODO: Add some examples here.
 
 #![warn(missing_docs)]
-#![feature(unboxed_closures, core)]
+#![feature(fn_traits, unboxed_closures)]
 
 pub use compose::{compose, compose_trans};
 pub use transform::{Filtering, Identity, Mapping};
@@ -108,7 +108,7 @@ fn reduce_iter_sum() {
 /// let v_map: Vec<i32> = v.iter().map(f).collect();
 /// assert_eq!(v_trans, v_map);
 /// ```
-pub fn transduce<'t, 'i, T, U, I: Iterator<Item = U>,
+pub fn transduce<'t, 'i, T: 't, U, I: Iterator<Item = U>,
                  Step: Fn(Vec<T>, U) -> Vec<T>,
                  Trans: Transducer<'t, Vec<T>, T, U, Step = Step>>
                 (iter: &'i mut I, trans: Trans)
