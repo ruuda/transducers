@@ -16,8 +16,8 @@ that is a collection, an iterator, a channel, or an observable.
 The library is licensed under the [GNU General Public License][gplv3] version 3
 during the alpha stage.
 
-[ci-img]:      https://travis-ci.org/ruud-v-a/transducers.svg
-[ci]:          https://travis-ci.org/ruud-v-a/transducers
+[ci-img]:      https://travis-ci.org/ruuda/transducers.svg
+[ci]:          https://travis-ci.org/ruuda/transducers
 [crate-img]:   http://img.shields.io/crates/v/transducers.svg
 [crate]:       https://crates.io/crates/transducers
 [transducers]: https://www.youtube.com/watch?v=6mTbuzafcII
